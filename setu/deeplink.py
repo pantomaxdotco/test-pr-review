@@ -17,6 +17,7 @@ from setu.body import (
 from setu.contract import (
     API,
     AUTH_TYPE_JWT,
+    AUTH_TYPE_OAUTH,
     MODE_PRODUCTION,
     AuthType,
     CreatePaymentLinkResponseData,
@@ -32,7 +33,7 @@ from setu.contract import (
     SetuAPIException,
     ValidationRules,
 )
-from setu.endpoint import get_url_path
+from setu.endpoint import PRODUCTION_BASE, SANDBOX_BASE
 from setu.serial import (
     CreatePaymentLinkResponseDataSchema,
     InitiateBatchRefundResponseDataSchema,
@@ -44,6 +45,28 @@ from setu.serial import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+
+def get_url_path(
+    endpoint: API,
+    auth_type: AuthType = "JWT",
+    mode: Mode = "SANDBOX",
+) -> str:
+    """Get URL for API.
+
+    Args:
+        endpoint (API): _description_
+        auth_type (AuthType, optional): _description_. Defaults to "JWT".
+        mode (Mode, optional): _description_. Defaults to "SANDBOX".
+
+    Returns:
+        str: _description_
+    """
+    return "{base_url}{api_version}{path}".format(
+        base_url=PRODUCTION_BASE if mode == MODE_PRODUCTION else SANDBOX_BASE,
+        api_version="/v2" if auth_type == AUTH_TYPE_OAUTH else "",
+        path=endpoint.value,
+    )
 
 
 class Deeplink:
@@ -77,14 +100,17 @@ class Deeplink:
         }
 
         self.session = requests.Session()
-        self.session.hooks = {"response": lambda r, *args, **kwargs: self.exception_handler(r)}
+        self.session.hooks = {
+            "response": lambda r, *args, **kwargs: self.exception_handler(r)
+        }
 
     def regenerate_token(self):
         """Re-generate token."""
         if self.auth_type == AUTH_TYPE_JWT:
             authorization = generate_jwt_token(self.scheme_id, self.secret)
         else:
-            authorization = generate_oauth_token(self.scheme_id, self.secret, self.mode)
+            authorization = generate_oauth_token(self.scheme_id, self.secret,
+                                                 self.mode)
         self.headers["Authorization"] = authorization
 
     @staticmethod
@@ -93,7 +119,9 @@ class Deeplink:
         try:
             r.raise_for_status()
         except requests.exceptions.RequestException as e:
-            if isinstance(e, requests.exceptions.HTTPError) and r.reason == "Forbidden":
+            if isinstance(
+                    e,
+                    requests.exceptions.HTTPError) and r.reason == "Forbidden":
                 raise e
             else:
                 error_response_schema = SetuErrorResponseSchema()
@@ -150,11 +178,14 @@ class Deeplink:
             json=payload,
             headers=self.headers,
         )
-        create_payment_link_response_data_schema = CreatePaymentLinkResponseDataSchema()
-        return create_payment_link_response_data_schema.load(api_response.json()['data'])
+        create_payment_link_response_data_schema = CreatePaymentLinkResponseDataSchema(
+        )
+        return create_payment_link_response_data_schema.load(
+            api_response.json()['data'])
 
     @Decorators.auth_handler
-    def check_payment_status(self, platform_bill_id: str) -> PaymentLinkStatusResponseData:
+    def check_payment_status(
+            self, platform_bill_id: str) -> PaymentLinkStatusResponseData:
         """Check status of UPI payment link."""
         api_response = self.session.get(
             "{}/{}".format(
@@ -163,21 +194,27 @@ class Deeplink:
             ),
             headers=self.headers,
         )
-        payment_link_status_response_data_schema = PaymentLinkStatusResponseDataSchema()
-        return payment_link_status_response_data_schema.load(api_response.json()['data'])
+        payment_link_status_response_data_schema = PaymentLinkStatusResponseDataSchema(
+        )
+        return payment_link_status_response_data_schema.load(
+            api_response.json()['data'])
 
     @Decorators.auth_handler
-    def trigger_mock_payment(self, amount_value: float, upi_id: str, platform_bill_id: str) -> MockCreditResponseData:
+    def trigger_mock_payment(self, amount_value: float, upi_id: str,
+                             platform_bill_id: str) -> MockCreditResponseData:
         """Trigger mock payment for UPI payment link.
 
         This API is available only on SANDBOX mode.
         """
         if self.mode == MODE_PRODUCTION:
-            raise Exception("trigger_mock_payment METHOD IS IS NOT AVAILABLE IN PRODUCTION")
+            raise Exception(
+                "trigger_mock_payment METHOD IS IS NOT AVAILABLE IN PRODUCTION"
+            )
 
         payload: Dict[str, Any] = get_mock_credit_body(
-            amount_value=amount_value, upi_id=upi_id, platform_bill_id=platform_bill_id
-        )
+            amount_value=amount_value,
+            upi_id=upi_id,
+            platform_bill_id=platform_bill_id)
 
         api_response = self.session.post(
             get_url_path(API.TRIGGER_MOCK_PAYMENT, self.auth_type, self.mode),
@@ -185,7 +222,8 @@ class Deeplink:
             headers=self.headers,
         )
         mock_credit_response_data_schema = MockCreditResponseDataSchema()
-        return mock_credit_response_data_schema.load(api_response.json()['data'])
+        return mock_credit_response_data_schema.load(
+            api_response.json()['data'])
 
     @Decorators.auth_handler
     def trigger_mock_settlement(self, utrs: List[str]):
@@ -193,7 +231,8 @@ class Deeplink:
         payload: Dict[str, Any] = get_mock_settlement_body(utrs=utrs)
 
         self.session.post(
-            get_url_path(API.TRIGGER_MOCK_SETTLEMENT, self.auth_type, self.mode),
+            get_url_path(API.TRIGGER_MOCK_SETTLEMENT, self.auth_type,
+                         self.mode),
             json=payload,
             headers=self.headers,
         )
@@ -208,43 +247,58 @@ class Deeplink:
         payload: Dict[str, Any] = get_batch_refund_body(refunds=refunds)
 
         api_response = self.session.post(
-            "{}/batch".format(get_url_path(API.REFUNDS_BASE, self.auth_type, self.mode)),
+            "{}/batch".format(
+                get_url_path(API.REFUNDS_BASE, self.auth_type, self.mode)),
             json=payload,
             headers=self.headers,
         )
-        initiate_batch_refund_response_data_schema = InitiateBatchRefundResponseDataSchema()
-        return initiate_batch_refund_response_data_schema.load(api_response.json()['data'])
+        initiate_batch_refund_response_data_schema = InitiateBatchRefundResponseDataSchema(
+        )
+        return initiate_batch_refund_response_data_schema.load(
+            api_response.json()['data'])
 
-    @deprecated(version="1.2.0", reason="Use the more generic get_refund_status_by_identifier method instead")
+    @deprecated(
+        version="1.2.0",
+        reason=
+        "Use the more generic get_refund_status_by_identifier method instead")
     @Decorators.auth_handler
-    def get_batch_refund_status(self, batch_refund_id: str) -> RefundStatusByIdentifierResponse:
+    def get_batch_refund_status(
+            self, batch_refund_id: str) -> RefundStatusByIdentifierResponse:
         """Get batch refund status."""
         api_response = self.session.get(
-            "{}/batch/{}".format(get_url_path(API.REFUNDS_BASE, self.auth_type, self.mode), batch_refund_id),
+            "{}/batch/{}".format(
+                get_url_path(API.REFUNDS_BASE, self.auth_type, self.mode),
+                batch_refund_id),
             headers=self.headers,
         )
-        batch_refund_status_response_schema = RefundStatusByIdentifierResponseSchema()
-        return batch_refund_status_response_schema.load(api_response.json()['data'])
+        batch_refund_status_response_schema = RefundStatusByIdentifierResponseSchema(
+        )
+        return batch_refund_status_response_schema.load(
+            api_response.json()['data'])
 
     @Decorators.auth_handler
     def get_refund_status_by_identifier(
-        self, identifier_type: RefundStatusIdentifierType, identifier_value: str
-    ) -> RefundStatusByIdentifierResponse:
+            self, identifier_type: RefundStatusIdentifierType,
+            identifier_value: str) -> RefundStatusByIdentifierResponse:
         """Get batch refund status."""
         api_response = self.session.get(
             "{}/{}/{}".format(
-                get_url_path(API.REFUNDS_BASE, self.auth_type, self.mode), identifier_type, identifier_value
-            ),
+                get_url_path(API.REFUNDS_BASE, self.auth_type, self.mode),
+                identifier_type, identifier_value),
             headers=self.headers,
         )
-        batch_refund_status_response_schema = RefundStatusByIdentifierResponseSchema()
-        return batch_refund_status_response_schema.load(api_response.json()['data'])
+        batch_refund_status_response_schema = RefundStatusByIdentifierResponseSchema(
+        )
+        return batch_refund_status_response_schema.load(
+            api_response.json()['data'])
 
     @Decorators.auth_handler
     def get_refund_status(self, refund_id: str) -> RefundResponseItem:
         """Get individual refund status."""
         api_response = self.session.get(
-            "{}/{}".format(get_url_path(API.REFUNDS_BASE, self.auth_type, self.mode), refund_id),
+            "{}/{}".format(
+                get_url_path(API.REFUNDS_BASE, self.auth_type, self.mode),
+                refund_id),
             headers=self.headers,
         )
         refund_response_item_schema = RefundResponseItemSchema()
