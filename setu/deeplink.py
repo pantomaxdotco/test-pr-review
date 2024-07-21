@@ -195,9 +195,9 @@ class Deeplink:
             ),
             headers=self.headers,
         )
-        payment_link_status_response_data_schema = PaymentLinkStatusResponseDataSchema(
+        schema = PaymentLinkStatusResponseDataSchema(
         )
-        return payment_link_status_response_data_schema.load(
+        return schema.load(
             api_response.json()['data'])
 
     @Decorators.auth_handler
