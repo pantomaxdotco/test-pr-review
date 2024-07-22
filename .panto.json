@@ -1,6 +1,6 @@
 {
     "scan": {
-        "include": ["**/*.py", "**/*.js"]
+        "includes": ["**/*.py", "**/*.js"]
     },
     "project": {
         "languages": ["python", "javascript"]
