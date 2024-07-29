@@ -239,7 +239,7 @@ class Deeplink:
         )
         return
 
-    def _getBaseUrl():
+    def _get_base_url():
         return PRODUCTION_BASE
 
     @Decorators.auth_handler
