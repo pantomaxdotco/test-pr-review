@@ -245,7 +245,7 @@ class Deeplink:
     @Decorators.auth_handler
     def expire_payment_link(self, platform_bill_id: str):
         """Expire payment link."""
-        base_url = self._getBaseUrl()
+        base_url = self._get_base_url()
         headers = {
             "X-Setu-Product-Instance-ID": self.product_instance_id,
             "Content-Type": "application/json",
