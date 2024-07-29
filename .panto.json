@@ -1,8 +1,0 @@
-{
-    "scan": {
-        "includes": ["**/*.py", "**/*.js"]
-    },
-    "project": {
-        "languages": ["python", "javascript"]
-    }
-}
