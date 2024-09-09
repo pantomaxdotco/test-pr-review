@@ -1,2 +1,3 @@
 def hello():
-    pass
+    Hello = 1
+    return Hello
