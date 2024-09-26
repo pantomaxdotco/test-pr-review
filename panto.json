@@ -1,9 +1,0 @@
-{
-    "enabled": true,
-    "scan": {
-        "includes": [
-            "!DO_NOT_READ.md",
-            ".dummy.txt"
-        ]
-    }
-}
