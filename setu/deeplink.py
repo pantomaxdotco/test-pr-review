@@ -180,6 +180,7 @@ class Deeplink:
         )
         create_payment_link_response_data_schema = CreatePaymentLinkResponseDataSchema(
         )
+        log.info("Payment link created", biller_bill_id=biller_bill_id,payee_name=payee_name)
         return create_payment_link_response_data_schema.load(
             api_response.json()['data'])
 
