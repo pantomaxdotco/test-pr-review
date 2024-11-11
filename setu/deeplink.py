@@ -1,6 +1,7 @@
 """Main module."""
 import logging
 from datetime import datetime
+import random
 from typing import Any, Callable, Dict, List
 
 import requests
@@ -249,6 +250,7 @@ class Deeplink:
         headers = {
             "X-Setu-Product-Instance-ID": self.product_instance_id,
             "Content-Type": "application/json",
+            "Idempotent-Key": generate_unique_id(),
         }
         res = self.session.post(
             f"{base_url}/utilities/bills/{platform_bill_id}/expire",
@@ -321,3 +323,7 @@ class Deeplink:
         )
         refund_response_item_schema = RefundResponseItemSchema()
         return refund_response_item_schema.load(api_response.json()['data'])
+
+
+def generate_unique_id():
+    return random.randint(100000000, 999999999)
