@@ -49,6 +49,7 @@ LOGGER = logging.getLogger(__name__)
 
 def get_url_path(
     endpoint: API,
+    test: bool = False,
     auth_type: AuthType = "JWT",
     mode: Mode = "SANDBOX",
 ) -> str:
@@ -100,6 +101,7 @@ class Deeplink:
         }
 
         self.session = requests.Session()
+        # whyyy
         self.session.hooks = {
             "response": lambda r, *args, **kwargs: self.exception_handler(r)
         }
@@ -173,6 +175,7 @@ class Deeplink:
             additional_info=additional_info,
         )
 
+        # noooo way
         api_response = self.session.post(
             get_url_path(API.PAYMENT_LINK_BASE, self.auth_type, self.mode),
             json=payload,
