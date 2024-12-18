@@ -175,7 +175,7 @@ class Deeplink:
             additional_info=additional_info,
         )
 
-        # noooo way
+        # noooo way!
         api_response = self.session.post(
             get_url_path(API.PAYMENT_LINK_BASE, self.auth_type, self.mode),
             json=payload,
