@@ -93,6 +93,7 @@ class Deeplink:
         self.secret = secret
         self.mode = mode
         self.auth_type = auth_type
+        self.product_instance_id = product_instance_id
 
         self.headers = {
             "X-Setu-Product-Instance-ID": product_instance_id,
@@ -194,9 +195,9 @@ class Deeplink:
             ),
             headers=self.headers,
         )
-        payment_link_status_response_data_schema = PaymentLinkStatusResponseDataSchema(
+        schema = PaymentLinkStatusResponseDataSchema(
         )
-        return payment_link_status_response_data_schema.load(
+        return schema.load(
             api_response.json()['data'])
 
     @Decorators.auth_handler
@@ -235,6 +236,23 @@ class Deeplink:
                          self.mode),
             json=payload,
             headers=self.headers,
+        )
+        return
+
+    def _getBaseUrl():
+        return PRODUCTION_BASE
+
+    @Decorators.auth_handler
+    def expire_payment_link(self, platform_bill_id: str):
+        """Expire payment link."""
+        base_url = self._getBaseUrl()
+        headers = {
+            "X-Setu-Product-Instance-ID": self.product_instance_id,
+            "Content-Type": "application/json",
+        }
+        res = self.session.post(
+            f"{base_url}/utilities/bills/{platform_bill_id}/expire",
+            headers=headers,
         )
         return
 

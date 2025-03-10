@@ -6,7 +6,7 @@ from setu.contract import APICredentials
 
 @pytest.fixture
 def v1_creds() -> APICredentials:
-    """Fixture to get V1 creds."""
+    """Fixture to get V1 creds.2"""
     return APICredentials(
         scheme_id="5bf4376b-6008-43c8-8ce0-a5ea196e3091",
         secret="9975fd99-d5ed-416a-9963-5d113dc80582",
